@@ -1,0 +1,17 @@
+"use client";
+import {useState} from "react";
+const links=[["INSS","Beneficiário do INSS"],["Prefeitura","Servidor municipal"],["CLT","Trabalhador registrado"],["Servidor Público","Servidor público"]];
+const values=["R$ 5 mil","R$ 10 mil","R$ 15 mil","R$ 20 mil","R$ 30 mil+"];
+const parcels=["Até R$ 200","R$ 200 a R$ 300","R$ 300 a R$ 500","R$ 500 a R$ 800","Acima de R$ 800"];
+export default function Home(){
+ const [step,setStep]=useState(1),[link,setLink]=useState(""),[value,setValue]=useState(""),[parcel,setParcel]=useState(""),[name,setName]=useState(""),[phone,setPhone]=useState(""),[consent,setConsent]=useState(false),[sent,setSent]=useState(false);
+ const go=()=>setStep(s=>Math.min(4,s+1));
+ return <main className="page"><section className="shell"><div className="brand"><b>RT</b><span>Soluções Financeiras</span></div><div className="progress"><i style={{width:(step*25)+"%"}}/></div>
+ {sent?<div className="card success"><div className="check">✓</div><small>CONSULTA RECEBIDA</small><h1>Recebemos seus dados.</h1><p>Um consultor poderá entrar em contato para dar continuidade à consulta. O preenchimento não garante aprovação ou contratação.</p><button onClick={()=>location.reload()}>Nova consulta</button></div>:
+ <>
+ {step===1&&<div className="card"><small>ETAPA 1 DE 4</small><h1>Consulte uma possibilidade de crédito.</h1><p>Comece informando seu vínculo.</p><div className="grid">{links.map(x=><button className={link===x[0]?"choice active":"choice"} onClick={()=>setLink(x[0])} key={x[0]}><b>{x[0]}</b><span>{x[1]}</span></button>)}</div><button className="primary" disabled={!link} onClick={go}>Continuar</button></div>}
+ {step===2&&<div className="card"><small>ETAPA 2 DE 4</small><h2>Quanto você gostaria de consultar?</h2><p>Escolha uma faixa aproximada.</p><div className="grid">{values.map(x=><button className={value===x?"choice active":"choice"} onClick={()=>setValue(x)} key={x}>{x}</button>)}</div><button className="primary" disabled={!value} onClick={go}>Continuar</button></div>}
+ {step===3&&<div className="card"><small>ETAPA 3 DE 4</small><h2>Qual parcela cabe no seu orçamento?</h2><p>Essa informação ajuda a direcionar a consulta.</p><div className="grid">{parcels.map(x=><button className={parcel===x?"choice active":"choice"} onClick={()=>setParcel(x)} key={x}>{x}</button>)}</div><button className="primary" disabled={!parcel} onClick={go}>Continuar</button></div>}
+ {step===4&&<div className="card"><small>ÚLTIMA ETAPA</small><h2>Como podemos falar com você?</h2><p>Preencha seus dados para continuar.</p><label>Nome<input value={name} onChange={e=>setName(e.target.value)} placeholder="Seu nome"/></label><label>WhatsApp<input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="(00) 00000-0000" inputMode="tel"/></label><label className="consent"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/> Concordo com o contato referente a esta solicitação e com o tratamento dos dados conforme a política de privacidade.</label><button className="primary" disabled={!name||!phone||!consent} onClick={()=>setSent(true)}>Enviar consulta</button></div>}
+ </>}</>}<footer>RT Soluções Financeiras · Central de Simulação</footer></section></main>
+}
