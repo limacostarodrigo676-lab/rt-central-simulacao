@@ -34,7 +34,7 @@ export default function Home() {
     <main className="page">
       <section className="shell">
         <header className="header">
-          <img src="/rt-logo.svg" alt="RT Soluções Financeiras" />
+          <img src="/simulacao/rt-logo.svg" alt="RT Soluções Financeiras" />
         </header>
 
         <div className="hero">
