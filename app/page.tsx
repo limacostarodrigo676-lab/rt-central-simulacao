@@ -18,6 +18,12 @@ const parcels = [
   "Acima de R$ 800",
 ];
 
+function encodeForm(data: Record<string, string>) {
+  return Object.keys(data)
+    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`)
+    .join("&");
+}
+
 export default function Home() {
   const [step, setStep] = useState(1);
   const [link, setLink] = useState("");
@@ -27,8 +33,44 @@ export default function Home() {
   const [phone, setPhone] = useState("");
   const [consent, setConsent] = useState(false);
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState(false);
 
   const go = () => setStep((current) => Math.min(4, current + 1));
+
+  async function submitLead() {
+    setSending(true);
+    setSendError(false);
+    const payload = {
+      "form-name": "simulador-lead",
+      vinculo: link,
+      valor: value,
+      parcela: parcel,
+      nome: name,
+      whatsapp: phone,
+    };
+    const results = await Promise.allSettled([
+      fetch("/simulador", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: encodeForm(payload),
+      }),
+      fetch("https://rt-central-simulacao.netlify.app/.netlify/functions/notify-whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vinculo: link, valor: value, parcela: parcel, nome: name, whatsapp: phone }),
+      }),
+    ]);
+    const emailFailed = results[0].status === "rejected" || (results[0].status === "fulfilled" && !results[0].value.ok);
+    if (emailFailed) {
+      console.error("Falha ao enviar lead para o Netlify Forms");
+      setSendError(true);
+    }
+    // Falha no aviso de WhatsApp não bloqueia o fluxo nem mostra erro pro lead;
+    // o Netlify Forms (e-mail) é o canal garantido.
+    setSending(false);
+    setSent(true);
+  }
 
   return (
     <main className="page">
@@ -47,6 +89,17 @@ export default function Home() {
           <i style={{ width: `${step * 25}%` }} />
         </div>
 
+        {/* Formulário estático oculto: registra o form "simulador-lead" no
+            Netlify Forms durante o build, para o envio via fetch() abaixo
+            ser aceito. Não é exibido nem preenchido pelo usuário. */}
+        <form name="simulador-lead" data-netlify="true" hidden>
+          <input type="text" name="vinculo" />
+          <input type="text" name="valor" />
+          <input type="text" name="parcela" />
+          <input type="text" name="nome" />
+          <input type="text" name="whatsapp" />
+        </form>
+
         {sent ? (
           <div className="card success">
             <div className="check">✓</div>
@@ -56,6 +109,12 @@ export default function Home() {
               Um consultor poderá entrar em contato para dar continuidade à
               consulta. O preenchimento não garante aprovação ou contratação.
             </p>
+            {sendError && (
+              <p className="warn">
+                Não conseguimos confirmar o envio automático — se não formos
+                contato em breve, chama no WhatsApp.
+              </p>
+            )}
             <button className="primary" onClick={() => window.location.reload()}>
               Nova consulta
             </button>
@@ -162,10 +221,10 @@ export default function Home() {
                 </label>
                 <button
                   className="primary"
-                  disabled={!name || !phone || !consent}
-                  onClick={() => setSent(true)}
+                  disabled={!name || !phone || !consent || sending}
+                  onClick={submitLead}
                 >
-                  Enviar consulta
+                  {sending ? "Enviando..." : "Enviar consulta"}
                 </button>
               </div>
             )}
