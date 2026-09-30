@@ -1,5 +1,3 @@
-import type { Context } from "@netlify/functions";
-
 const ALLOWED_ORIGINS = new Set([
   "https://rtsolucoesfinanceira.com.br",
   "https://rt-central-simulacao.netlify.app",
@@ -14,7 +12,7 @@ function corsHeaders(origin: string | null) {
   };
 }
 
-export default async (req: Request, _context: Context) => {
+export default async (req: Request) => {
   const origin = req.headers.get("origin");
   const headers = corsHeaders(origin);
 
