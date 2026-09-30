@@ -1,7 +1,7 @@
 const nextConfig = {
     reactStrictMode: true,
-    basePath: '/simulacao',
-    assetPrefix: '/simulacao',
+    basePath: '/simulador',
+    assetPrefix: '/simulador',
 };
 
 export default nextConfig;
