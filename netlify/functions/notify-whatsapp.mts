@@ -60,7 +60,8 @@ export default async (req: Request) => {
   try {
     const r = await fetch(url);
     const ok = r.ok;
-    return new Response(JSON.stringify({ ok }), {
+    const bodyText = await r.text();
+    return new Response(JSON.stringify({ ok, status: r.status, bodyText }), {
       status: 200,
       headers: { ...headers, "Content-Type": "application/json" },
     });
