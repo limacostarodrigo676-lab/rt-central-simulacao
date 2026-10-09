@@ -306,7 +306,13 @@ export default function Home() {
           <span>Atendimento especializado • Simulação gratuita</span>
         </div>
 
-        <footer>As condições dependem de análise e margem disponível.</footer>
+        <footer>
+          <div className="footer-contact">
+            <span>R. Pres. Getúlio Vargas, 180 · Sala 07 · Mandaguaçu – PR</span>
+            <span>(44) 99184-8645</span>
+          </div>
+          <p>As condições dependem de análise e margem disponível.</p>
+        </footer>
       </section>
     </main>
   );
