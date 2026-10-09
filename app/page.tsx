@@ -50,7 +50,7 @@ export default function Home() {
       whatsapp: phone,
     };
     const results = await Promise.allSettled([
-      fetch("/simulador", {
+      fetch("/simulador/__forms.html", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: encodeForm(payload),
@@ -88,17 +88,6 @@ export default function Home() {
         <div className="progress">
           <i style={{ width: `${step * 25}%` }} />
         </div>
-
-        {/* Formulário estático oculto: registra o form "simulador-lead" no
-            Netlify Forms durante o build, para o envio via fetch() abaixo
-            ser aceito. Não é exibido nem preenchido pelo usuário. */}
-        <form name="simulador-lead" data-netlify="true" hidden>
-          <input type="text" name="vinculo" />
-          <input type="text" name="valor" />
-          <input type="text" name="parcela" />
-          <input type="text" name="nome" />
-          <input type="text" name="whatsapp" />
-        </form>
 
         {sent ? (
           <div className="card success">
