@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 const links = [
   ["INSS", "Beneficiário do INSS"],
@@ -24,8 +25,20 @@ function encodeForm(data: Record<string, string>) {
     .join("&");
 }
 
+function BackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button className="back" onClick={onClick} type="button" aria-label="Voltar para a etapa anterior">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      Voltar
+    </button>
+  );
+}
+
 export default function Home() {
   const [step, setStep] = useState(1);
+  const [direction, setDirection] = useState(1);
   const [link, setLink] = useState("");
   const [value, setValue] = useState("");
   const [parcel, setParcel] = useState("");
@@ -36,7 +49,16 @@ export default function Home() {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState(false);
 
-  const go = () => setStep((current) => Math.min(4, current + 1));
+  const prefersReducedMotion = useReducedMotion();
+
+  const go = () => {
+    setDirection(1);
+    setStep((current) => Math.min(4, current + 1));
+  };
+  const back = () => {
+    setDirection(-1);
+    setStep((current) => Math.max(1, current - 1));
+  };
 
   async function submitLead() {
     setSending(true);
@@ -72,6 +94,15 @@ export default function Home() {
     setSent(true);
   }
 
+  const stepVariants = {
+    enter: (dir: number) => ({ x: prefersReducedMotion ? 0 : dir > 0 ? 28 : -28, opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (dir: number) => ({ x: prefersReducedMotion ? 0 : dir > 0 ? -28 : 28, opacity: 0 }),
+  };
+  const stepTransition = prefersReducedMotion
+    ? { duration: 0.12 }
+    : { type: "spring" as const, bounce: 0, duration: 0.38 };
+
   return (
     <main className="page">
       <section className="shell">
@@ -85,140 +116,190 @@ export default function Home() {
           <p>Consulte possibilidades de crédito de forma simples e segura.</p>
         </div>
 
-        <div className="progress">
-          <i style={{ width: `${step * 25}%` }} />
-        </div>
-
-        {sent ? (
-          <div className="card success">
-            <div className="check">✓</div>
-            <small>CONSULTA RECEBIDA</small>
-            <h2>Recebemos seus dados.</h2>
-            <p>
-              Um consultor poderá entrar em contato para dar continuidade à
-              consulta. O preenchimento não garante aprovação ou contratação.
-            </p>
-            {sendError && (
-              <p className="warn">
-                Não conseguimos confirmar o envio automático — se não formos
-                contato em breve, chama no WhatsApp.
-              </p>
-            )}
-            <button className="primary" onClick={() => window.location.reload()}>
-              Nova consulta
-            </button>
+        {!sent && (
+          <div className="progress">
+            <motion.i
+              animate={{ width: `${step * 25}%` }}
+              transition={prefersReducedMotion ? { duration: 0.12 } : { type: "spring", bounce: 0, duration: 0.4 }}
+            />
           </div>
-        ) : (
-          <>
-            {step === 1 && (
-              <div className="card">
-                <small>ETAPA 1 DE 4</small>
-                <h2>Qual é o seu vínculo?</h2>
-                <p>Selecione uma opção para começar.</p>
-                <div className="grid">
-                  {links.map(([label, description]) => (
-                    <button
-                      className={link === label ? "choice active" : "choice"}
-                      onClick={() => setLink(label)}
-                      key={label}
-                    >
-                      <b>{label}</b>
-                      <span>{description}</span>
-                    </button>
-                  ))}
-                </div>
-                <button className="primary" disabled={!link} onClick={go}>
-                  Começar simulação
-                </button>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="card">
-                <small>ETAPA 2 DE 4</small>
-                <h2>Quanto você gostaria de consultar?</h2>
-                <p>Escolha uma faixa aproximada.</p>
-                <div className="grid">
-                  {values.map((item) => (
-                    <button
-                      className={value === item ? "choice active" : "choice"}
-                      onClick={() => setValue(item)}
-                      key={item}
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-                <button className="primary" disabled={!value} onClick={go}>
-                  Continuar
-                </button>
-              </div>
-            )}
-
-            {step === 3 && (
-              <div className="card">
-                <small>ETAPA 3 DE 4</small>
-                <h2>Qual parcela cabe no seu orçamento?</h2>
-                <p>Essa informação ajuda a direcionar a consulta.</p>
-                <div className="grid">
-                  {parcels.map((item) => (
-                    <button
-                      className={parcel === item ? "choice active" : "choice"}
-                      onClick={() => setParcel(item)}
-                      key={item}
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-                <button className="primary" disabled={!parcel} onClick={go}>
-                  Continuar
-                </button>
-              </div>
-            )}
-
-            {step === 4 && (
-              <div className="card">
-                <small>ÚLTIMA ETAPA</small>
-                <h2>Como podemos falar com você?</h2>
-                <p>Preencha seus dados para continuar.</p>
-                <label>
-                  Nome
-                  <input
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    placeholder="Seu nome"
-                  />
-                </label>
-                <label>
-                  WhatsApp
-                  <input
-                    value={phone}
-                    onChange={(event) => setPhone(event.target.value)}
-                    placeholder="(00) 00000-0000"
-                    inputMode="tel"
-                  />
-                </label>
-                <label className="consent">
-                  <input
-                    type="checkbox"
-                    checked={consent}
-                    onChange={(event) => setConsent(event.target.checked)}
-                  />
-                  Concordo com o contato referente a esta solicitação e com o
-                  tratamento dos dados conforme a política de privacidade.
-                </label>
-                <button
-                  className="primary"
-                  disabled={!name || !phone || !consent || sending}
-                  onClick={submitLead}
-                >
-                  {sending ? "Enviando..." : "Enviar consulta"}
-                </button>
-              </div>
-            )}
-          </>
         )}
+
+        <AnimatePresence mode="wait" custom={direction} initial={false}>
+          {sent ? (
+            <motion.div
+              key="success"
+              className="card success"
+              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={stepTransition}
+            >
+              <motion.div
+                className="check"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0.12 }
+                    : { type: "spring", bounce: 0.3, duration: 0.5, delay: 0.05 }
+                }
+              >
+                ✓
+              </motion.div>
+              <small>CONSULTA RECEBIDA</small>
+              <h2>Recebemos seus dados.</h2>
+              <p>
+                Um consultor poderá entrar em contato para dar continuidade à
+                consulta. O preenchimento não garante aprovação ou contratação.
+              </p>
+              {sendError && (
+                <p className="warn">
+                  Não conseguimos confirmar o envio automático — se não formos
+                  contato em breve, chama no WhatsApp.
+                </p>
+              )}
+              <button className="primary" onClick={() => window.location.reload()}>
+                Nova consulta
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key={step}
+              className="card"
+              custom={direction}
+              variants={stepVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={stepTransition}
+            >
+              {step === 1 && (
+                <>
+                  <small>ETAPA 1 DE 4</small>
+                  <h2>Qual é o seu vínculo?</h2>
+                  <p>Selecione uma opção para começar.</p>
+                  <div className="grid">
+                    {links.map(([label, description]) => (
+                      <button
+                        className={link === label ? "choice active" : "choice"}
+                        onClick={() => setLink(label)}
+                        key={label}
+                        type="button"
+                      >
+                        <b>{label}</b>
+                        <span>{description}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <button className="primary" disabled={!link} onClick={go}>
+                    Começar simulação
+                  </button>
+                </>
+              )}
+
+              {step === 2 && (
+                <>
+                  <BackButton onClick={back} />
+                  <small>ETAPA 2 DE 4</small>
+                  <h2>Quanto você gostaria de consultar?</h2>
+                  <p>Escolha uma faixa aproximada.</p>
+                  <div className="grid">
+                    {values.map((item) => (
+                      <button
+                        className={value === item ? "choice active" : "choice"}
+                        onClick={() => setValue(item)}
+                        key={item}
+                        type="button"
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                  <button className="primary" disabled={!value} onClick={go}>
+                    Continuar
+                  </button>
+                </>
+              )}
+
+              {step === 3 && (
+                <>
+                  <BackButton onClick={back} />
+                  <small>ETAPA 3 DE 4</small>
+                  <h2>Qual parcela cabe no seu orçamento?</h2>
+                  <p>Essa informação ajuda a direcionar a consulta.</p>
+                  <div className="grid">
+                    {parcels.map((item) => (
+                      <button
+                        className={parcel === item ? "choice active" : "choice"}
+                        onClick={() => setParcel(item)}
+                        key={item}
+                        type="button"
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                  <button className="primary" disabled={!parcel} onClick={go}>
+                    Continuar
+                  </button>
+                </>
+              )}
+
+              {step === 4 && (
+                <>
+                  <BackButton onClick={back} />
+                  <small>ÚLTIMA ETAPA</small>
+                  <h2>Como podemos falar com você?</h2>
+                  <p>Preencha seus dados para continuar.</p>
+                  <label>
+                    Nome
+                    <input
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      placeholder="Seu nome"
+                    />
+                  </label>
+                  <label>
+                    WhatsApp
+                    <input
+                      value={phone}
+                      onChange={(event) => setPhone(event.target.value)}
+                      placeholder="(00) 00000-0000"
+                      inputMode="tel"
+                    />
+                  </label>
+                  <label className="consent">
+                    <input
+                      type="checkbox"
+                      checked={consent}
+                      onChange={(event) => setConsent(event.target.checked)}
+                    />
+                    Concordo com o contato referente a esta solicitação e com o
+                    tratamento dos dados conforme a política de privacidade.
+                  </label>
+                  <button
+                    className="primary"
+                    disabled={!name || !phone || !consent || sending}
+                    onClick={submitLead}
+                  >
+                    {sending ? (
+                      <>
+                        Enviando
+                        <span className="dots">
+                          <span />
+                          <span />
+                          <span />
+                        </span>
+                      </>
+                    ) : (
+                      "Enviar consulta"
+                    )}
+                  </button>
+                </>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="trust">
           <b>RT Soluções Financeiras</b>
