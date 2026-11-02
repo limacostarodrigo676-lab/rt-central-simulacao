@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 const links = [
@@ -28,7 +28,7 @@ function encodeForm(data: Record<string, string>) {
 
 const highlighted = ["INSS", "Cartão Consignado"];
 
-const icons: Record<string, JSX.Element> = {
+const icons: Record<string, ReactNode> = {
   INSS: (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
       <circle cx="8" cy="5" r="2.6" stroke="currentColor" strokeWidth="1.5" />
