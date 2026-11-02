@@ -159,7 +159,6 @@ export default function Home() {
     <main className="page">
       <section className="shell">
         <header className="header">
-          <span aria-hidden="true" />
           <img src="/simulador/rt-logo.png" alt="RT Soluções Financeiras" className="logo-main" />
           <div className="partner">
             <span>Parceiro</span>
