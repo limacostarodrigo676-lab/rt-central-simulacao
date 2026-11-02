@@ -1,8 +1,11 @@
 :root{
-  --navy:#12305f;
-  --navy-deep:#0d2347;
-  --gold:#d3a43b;
-  --bg:#f6f7fa;
+  --navy:#0e2a52;
+  --navy-deep:#091d3b;
+  --green:#15a36b;
+  --green-deep:#0f8257;
+  --green-tint:#e9f8f1;
+  --gold:#15a36b; /* legado: antigo acento dourado agora mapeado pro verde da marca */
+  --bg:#f6f8fa;
   --text:#17233a;
   --muted:#687486;
   --border:#e1e5eb;
@@ -113,9 +116,24 @@ h2{font-size:26px;line-height:1.1;letter-spacing:-.01em}
 .choice b,.choice span{display:block}
 .choice span{font-size:13px;color:var(--muted);margin-top:4px;letter-spacing:0}
 .choice.active{
-  border-color:var(--gold);
-  background:#fffbf1;
-  box-shadow:0 0 0 2px #d3a43b20;
+  border-color:var(--green);
+  background:var(--green-tint);
+  box-shadow:0 0 0 2px #15a36b22;
+}
+
+.choice{position:relative}
+.choice-icon{
+  width:30px;height:30px;border-radius:9px;
+  display:grid;place-items:center;
+  background:var(--green-tint);color:var(--green-deep);
+  margin-bottom:8px;
+}
+.choice-icon svg{display:block}
+.choice-badge{
+  position:absolute;top:11px;right:11px;
+  background:var(--green);color:#fff;
+  font-size:9.5px;font-weight:800;letter-spacing:.04em;
+  padding:3px 7px;border-radius:99px;
 }
 
 /* ---------- primary button ---------- */
@@ -170,7 +188,7 @@ input:not([type=checkbox]){
   outline:none;
   transition:border-color .15s ease,box-shadow .15s ease;
 }
-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px #d3a43b1a}
+input:focus{border-color:var(--green);box-shadow:0 0 0 3px #15a36b1a}
 .consent{display:flex;gap:9px;font-weight:500;line-height:1.4;color:var(--muted);font-size:12px}
 .consent input{margin-top:2px}
 
@@ -179,8 +197,8 @@ input:focus{border-color:var(--gold);box-shadow:0 0 0 3px #d3a43b1a}
 .check{
   width:58px;height:58px;
   border-radius:50%;
-  background:#f7f0dc;
-  color:var(--navy);
+  background:var(--green-tint);
+  color:var(--green-deep);
   display:grid;place-items:center;
   font-size:28px;font-weight:800;
   margin:0 auto 18px;
@@ -201,6 +219,60 @@ input:focus{border-color:var(--gold);box-shadow:0 0 0 3px #d3a43b1a}
 }
 .trust span{color:var(--muted);font-size:11px}
 
+/* ---------- institutional blocks ---------- */
+.institutional{
+  margin-top:14px;
+  display:grid;gap:10px;
+}
+.inst-card{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:20px;
+  text-align:center;
+}
+.inst-card h3{
+  color:var(--navy);
+  font-size:16px;
+  font-weight:800;
+  margin:0 0 8px;
+  letter-spacing:-.005em;
+}
+.inst-card p{
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.55;
+  margin:0;
+}
+.stat-number{
+  color:var(--green-deep);
+  font-weight:800;
+}
+.inst-card.compromisso{
+  background:var(--navy);
+}
+.inst-card.compromisso h3{color:#fff}
+.inst-card.compromisso p{color:#cfd9ea}
+.inst-card.compromisso .stat-number{color:#6be3a6}
+
+.welcome{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:var(--green-tint);
+  border-radius:16px;
+  padding:16px 18px;
+  margin-top:10px;
+}
+.welcome-icon{
+  flex:0 0 auto;
+  width:38px;height:38px;border-radius:50%;
+  display:grid;place-items:center;
+  background:#fff;color:var(--green-deep);
+}
+.welcome-text b{display:block;color:var(--navy);font-size:13.5px;margin-bottom:2px}
+.welcome-text span{display:block;color:var(--muted);font-size:12px;line-height:1.5}
+
 footer{text-align:center;margin:18px 0 10px}
 .footer-contact{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--navy);font-size:12.5px;font-weight:700;letter-spacing:.01em;margin-bottom:8px}
 .footer-contact span:last-child{color:var(--muted);font-weight:600}
@@ -211,6 +283,8 @@ footer p{color:#9aa3b1;font-size:10px;letter-spacing:.02em;margin:0}
   h1{font-size:27px}
   h2{font-size:23px}
   .header img{width:190px}
+  .inst-card{padding:17px}
+  .welcome{padding:14px 15px;gap:10px}
 }
 
 @media (prefers-reduced-motion: reduce){
