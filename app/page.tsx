@@ -26,6 +26,41 @@ function encodeForm(data: Record<string, string>) {
     .join("&");
 }
 
+const highlighted = ["INSS", "Cartão Consignado"];
+
+const icons: Record<string, JSX.Element> = {
+  INSS: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="5" r="2.6" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M3 14c0-2.8 2.2-4.6 5-4.6s5 1.8 5 4.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  "Cartão Consignado": (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="1.5" y="3.5" width="13" height="9" rx="1.8" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M1.5 6.5h13" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  ),
+  Prefeitura: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M2 14V6l6-3.5L14 6v8" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M6 14v-4h4v4" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  ),
+  CLT: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="1.5" y="5" width="13" height="8.3" rx="1.6" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M5.5 5V3.8c0-.7.6-1.3 1.3-1.3h2.4c.7 0 1.3.6 1.3 1.3V5" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  ),
+  "Servidor Público": (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M8 1.6 13.5 3.6v4.1c0 3.4-2.3 5.9-5.5 6.7-3.2-.8-5.5-3.3-5.5-6.7V3.6L8 1.6Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M5.8 8l1.6 1.6 3-3.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+};
+
 function BackButton({ onClick }: { onClick: () => void }) {
   return (
     <button className="back" onClick={onClick} type="button" aria-label="Voltar para a etapa anterior">
@@ -113,7 +148,7 @@ export default function Home() {
 
         <div className="hero">
           <span>ATENDIMENTO ESPECIALIZADO</span>
-          <h1>Crédito consignado com condição personalizada.</h1>
+          <h1>Seu próximo passo para uma vida financeira mais tranquila.</h1>
           <p>Consulte possibilidades de crédito de forma simples e segura.</p>
         </div>
 
@@ -187,13 +222,17 @@ export default function Home() {
                         key={label}
                         type="button"
                       >
+                        {highlighted.includes(label) && (
+                          <span className="choice-badge">Mais procurado</span>
+                        )}
+                        <span className="choice-icon">{icons[label]}</span>
                         <b>{label}</b>
                         <span>{description}</span>
                       </button>
                     ))}
                   </div>
                   <button className="primary" disabled={!link} onClick={go}>
-                    Começar simulação
+                    Consultar minha possibilidade
                   </button>
                 </>
               )}
@@ -305,6 +344,48 @@ export default function Home() {
         <div className="trust">
           <b>RT Soluções Financeiras</b>
           <span>Atendimento especializado • Simulação gratuita</span>
+        </div>
+
+        <div className="institutional">
+          <div className="inst-card">
+            <h3>Mais possibilidades para você</h3>
+            <p>
+              Trabalhamos com <span className="stat-number">43 bancos parceiros</span>,
+              ampliando as possibilidades de encontrar uma solução adequada ao
+              seu perfil.
+            </p>
+          </div>
+
+          <div className="inst-card compromisso">
+            <h3>Compromisso com o mercado financeiro</h3>
+            <p>
+              Atuamos em conformidade com as práticas do setor financeiro e
+              mantemos vínculo associativo com a FEBRABAN (Federação
+              Brasileira de Bancos), reforçando o compromisso com a
+              transparência e a ética na intermediação de crédito.
+            </p>
+          </div>
+
+          <div className="welcome">
+            <span className="welcome-icon">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path
+                  d="M3 8.6c0-3 2.6-5.4 6-5.4s6 2.4 6 5.4c0 3-2.6 5.4-6 5.4-.8 0-1.6-.14-2.3-.4L3 14.6l1-2.7A5 5 0 0 1 3 8.6Z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+            <span className="welcome-text">
+              <b>Atendimento especializado e acolhedor</b>
+              <span>
+                Nossa equipe te acompanha do início ao fim da consulta, com
+                clareza e sem pressa, para encontrar o que faz sentido pra
+                você.
+              </span>
+            </span>
+          </div>
         </div>
 
         <footer>
