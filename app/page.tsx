@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 const links = [
   ["INSS", "Beneficiário do INSS"],
+  ["Cartão Consignado", "Desconto direto na folha/benefício"],
   ["Prefeitura", "Servidor municipal"],
   ["CLT", "Trabalhador registrado"],
   ["Servidor Público", "Servidor público"],
