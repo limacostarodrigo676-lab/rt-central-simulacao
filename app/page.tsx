@@ -159,7 +159,12 @@ export default function Home() {
     <main className="page">
       <section className="shell">
         <header className="header">
-          <img src="/simulador/rt-logo.png" alt="RT Soluções Financeiras" />
+          <span aria-hidden="true" />
+          <img src="/simulador/rt-logo.png" alt="RT Soluções Financeiras" className="logo-main" />
+          <div className="partner">
+            <span>Parceiro</span>
+            <img src="/simulador/pentagono-logo.png" alt="Pentágono Soluções Financeiras" />
+          </div>
         </header>
 
         <div className="hero">
