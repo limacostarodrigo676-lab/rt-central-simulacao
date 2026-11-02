@@ -96,6 +96,14 @@ export default function Home() {
     setStep((current) => Math.max(1, current - 1));
   };
 
+  // Seleciona a opção e já avança a etapa sozinho (um clique só) — o pequeno
+  // atraso é só pra dar tempo do usuário ver o card ficar verde antes de
+  // trocar de tela.
+  const selectAndGo = (setter: (value: string) => void, item: string) => {
+    setter(item);
+    window.setTimeout(go, 180);
+  };
+
   async function submitLead() {
     setSending(true);
     setSendError(false);
@@ -218,7 +226,7 @@ export default function Home() {
                     {links.map(([label, description]) => (
                       <button
                         className={link === label ? "choice active" : "choice"}
-                        onClick={() => setLink(label)}
+                        onClick={() => selectAndGo(setLink, label)}
                         key={label}
                         type="button"
                       >
@@ -231,9 +239,6 @@ export default function Home() {
                       </button>
                     ))}
                   </div>
-                  <button className="primary" disabled={!link} onClick={go}>
-                    Consultar minha possibilidade
-                  </button>
                 </>
               )}
 
@@ -247,7 +252,7 @@ export default function Home() {
                     {values.map((item) => (
                       <button
                         className={value === item ? "choice active" : "choice"}
-                        onClick={() => setValue(item)}
+                        onClick={() => selectAndGo(setValue, item)}
                         key={item}
                         type="button"
                       >
@@ -255,9 +260,6 @@ export default function Home() {
                       </button>
                     ))}
                   </div>
-                  <button className="primary" disabled={!value} onClick={go}>
-                    Continuar
-                  </button>
                 </>
               )}
 
@@ -271,7 +273,7 @@ export default function Home() {
                     {parcels.map((item) => (
                       <button
                         className={parcel === item ? "choice active" : "choice"}
-                        onClick={() => setParcel(item)}
+                        onClick={() => selectAndGo(setParcel, item)}
                         key={item}
                         type="button"
                       >
@@ -279,9 +281,6 @@ export default function Home() {
                       </button>
                     ))}
                   </div>
-                  <button className="primary" disabled={!parcel} onClick={go}>
-                    Continuar
-                  </button>
                 </>
               )}
 
