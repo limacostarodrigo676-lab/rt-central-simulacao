@@ -12,6 +12,14 @@ const links = [
 ];
 
 const values = ["R$ 5 mil", "R$ 10 mil", "R$ 15 mil", "R$ 20 mil", "R$ 30 mil+"];
+const cardValues = [
+  "Até R$ 1.000",
+  "Até R$ 2.000",
+  "Até R$ 3.000",
+  "Mais de R$ 3.000",
+  "Refinanciamento",
+  "Cartão com saque complementar",
+];
 const parcels = [
   "Até R$ 200",
   "R$ 200 a R$ 300",
@@ -246,10 +254,18 @@ export default function Home() {
                 <>
                   <BackButton onClick={back} />
                   <small>ETAPA 2 DE 4</small>
-                  <h2>Quanto você gostaria de consultar?</h2>
-                  <p>Escolha uma faixa aproximada.</p>
+                  <h2>
+                    {link === "Cartão Consignado"
+                      ? "Qual valor ou operação você procura?"
+                      : "Quanto você gostaria de consultar?"}
+                  </h2>
+                  <p>
+                    {link === "Cartão Consignado"
+                      ? "Escolha uma opção abaixo."
+                      : "Escolha uma faixa aproximada."}
+                  </p>
                   <div className="grid">
-                    {values.map((item) => (
+                    {(link === "Cartão Consignado" ? cardValues : values).map((item) => (
                       <button
                         className={value === item ? "choice active" : "choice"}
                         onClick={() => selectAndGo(setValue, item)}
