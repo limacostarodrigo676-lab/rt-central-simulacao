@@ -5,11 +5,11 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 const links = [
   ["INSS", "Beneficiário do INSS"],
+  ["Conta de Luz", "Crédito parcelado na fatura de energia"],
   ["Cartão Consignado", "Desconto direto na folha/benefício"],
   ["Prefeitura", "Servidor municipal"],
   ["CLT", "Trabalhador registrado"],
   ["Servidor Público", "Servidor público"],
-  ["Conta de Luz", "Crédito parcelado na fatura de energia"],
 ];
 
 const LUZ = "Conta de Luz";
@@ -45,6 +45,8 @@ const parcels = [
   "R$ 500 a R$ 800",
   "Acima de R$ 800",
 ];
+
+const MAX_FILE_BYTES = 8 * 1024 * 1024; // limite do Netlify Forms por envio
 
 function encodeForm(data: Record<string, string>) {
   return Object.keys(data)
@@ -113,6 +115,8 @@ export default function Home() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [bill, setBill] = useState("");
+  const [billFile, setBillFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState("");
   const [consent, setConsent] = useState(false);
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
@@ -152,11 +156,21 @@ export default function Home() {
       conta_luz: isLuz ? bill : "",
     };
     const results = await Promise.allSettled([
-      fetch("/simulador/__forms.html", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: encodeForm(payload),
-      }),
+      isLuz && billFile
+        ? fetch("/simulador/__forms.html", {
+            method: "POST",
+            body: (() => {
+              const data = new FormData();
+              Object.entries(payload).forEach(([key, val]) => data.append(key, val));
+              data.append("fatura", billFile);
+              return data;
+            })(),
+          })
+        : fetch("/simulador/__forms.html", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: encodeForm(payload),
+          }),
       fetch("https://rt-central-simulacao.netlify.app/.netlify/functions/notify-whatsapp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -167,6 +181,7 @@ export default function Home() {
           nome: name,
           whatsapp: phone,
           conta_luz: isLuz ? bill : "",
+          fatura_anexada: isLuz && billFile ? "sim" : "nao",
         }),
       }),
     ]);
@@ -426,6 +441,33 @@ export default function Home() {
                           inputMode="decimal"
                         />
                       </label>
+                      <label className={billFile ? "upload done" : "upload"}>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          onChange={(event) => {
+                            const file = event.target.files?.[0] ?? null;
+                            if (file && file.size > MAX_FILE_BYTES) {
+                              setFileError("Arquivo muito grande. Envie uma foto ou PDF de até 8 MB.");
+                              setBillFile(null);
+                              event.target.value = "";
+                              return;
+                            }
+                            setFileError("");
+                            setBillFile(file);
+                          }}
+                        />
+                        <span className="upload-icon" aria-hidden="true">
+                          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                            <path d="M9 12V3M5.5 6.5 9 3l3.5 3.5M3 12.5v1.7c0 .7.6 1.3 1.3 1.3h9.4c.7 0 1.3-.6 1.3-1.3v-1.7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </span>
+                        <span className="upload-text">
+                          <b>{billFile ? billFile.name : "Anexar a conta de luz (opcional)"}</b>
+                          <span>{billFile ? "Toque para trocar o arquivo" : "Foto ou PDF da última fatura — agiliza a análise"}</span>
+                        </span>
+                      </label>
+                      {fileError && <p className="warn">{fileError}</p>}
                       <p className="note">
                         {parcel === "No nome de outra pessoa"
                           ? "Essa modalidade exige que a conta esteja no nome de quem contrata. Um consultor vai te explicar as alternativas."
