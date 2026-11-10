@@ -214,6 +214,7 @@ input:not([type=checkbox]){
   transition:border-color .15s ease,box-shadow .15s ease;
 }
 input:focus{border-color:var(--green);box-shadow:0 0 0 3px #15a36b1a}
+.card .note{font-size:12px;line-height:1.45;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin:0 0 14px}
 .consent{display:flex;gap:9px;font-weight:500;line-height:1.4;color:var(--muted);font-size:12px}
 .consent input{margin-top:2px}
 

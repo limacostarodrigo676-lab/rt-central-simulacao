@@ -43,15 +43,17 @@ export default async (req: Request) => {
     return new Response("Invalid JSON", { status: 400, headers });
   }
 
-  const { vinculo = "-", valor = "-", parcela = "-", nome = "-", whatsapp = "-" } = body;
+  const { vinculo = "-", valor = "-", parcela = "-", nome = "-", whatsapp = "-", conta_luz = "" } = body;
+  const isLuz = vinculo === "Conta de Luz";
 
   const text =
     `Novo lead no simulador RT\n` +
     `Nome: ${nome}\n` +
     `WhatsApp: ${whatsapp}\n` +
     `Vinculo: ${vinculo}\n` +
-    `Valor desejado: ${valor}\n` +
-    `Parcela: ${parcela}`;
+    (isLuz
+      ? `Companhia: ${valor}\n` + `Situacao da conta: ${parcela}\n` + `Valor da conta: ${conta_luz || "-"}`
+      : `Valor desejado: ${valor}\n` + `Parcela: ${parcela}`);
 
   const url =
     `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(phone)}` +
