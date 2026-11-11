@@ -56,6 +56,14 @@ function encodeForm(data: Record<string, string>) {
 
 const highlighted = ["INSS", "Cartão Consignado"];
 
+// Vínculos clicáveis no simulador. Os demais aparecem apagados ("Em breve no
+// simulador") e o cliente é direcionado ao WhatsApp. Para liberar de novo,
+// basta incluir o nome aqui.
+const enabledLinks = ["Conta de Luz"];
+const WHATSAPP_URL =
+  "https://wa.me/5544991848645?text=" +
+  encodeURIComponent("Olá! Vi o simulador da RT e quero saber mais sobre outras opções de crédito.");
+
 const icons: Record<string, ReactNode> = {
   INSS: (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -285,10 +293,15 @@ export default function Home() {
                   <h2>Qual é o seu vínculo?</h2>
                   <p>Selecione uma opção para começar.</p>
                   <div className="grid">
-                    {links.map(([label, description]) => (
+                    {links.map(([label, description]) => {
+                      const enabled = enabledLinks.includes(label);
+                      return (
                       <button
-                        className={link === label ? "choice active" : "choice"}
+                        className={enabled ? (link === label ? "choice active" : "choice") : "choice disabled"}
+                        disabled={!enabled}
+                        aria-disabled={!enabled}
                         onClick={() => {
+                          if (!enabled) return;
                           if (label !== link) {
                             setValue("");
                             setParcel("");
@@ -298,15 +311,25 @@ export default function Home() {
                         key={label}
                         type="button"
                       >
-                        {highlighted.includes(label) && (
+                        {enabled && highlighted.includes(label) && (
                           <span className="choice-badge">Mais procurado</span>
                         )}
+                        {!enabled && <span className="choice-badge soon">Em breve no simulador</span>}
                         <span className="choice-icon">{icons[label]}</span>
                         <b>{label}</b>
                         <span>{description}</span>
                       </button>
-                    ))}
+                      );
+                    })}
                   </div>
+                  {enabledLinks.length < links.length && (
+                    <p className="other-help">
+                      Tem interesse em INSS, consignado ou outra opção?{" "}
+                      <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                        Fale com a gente no WhatsApp
+                      </a>
+                    </p>
+                  )}
                 </>
               )}
 

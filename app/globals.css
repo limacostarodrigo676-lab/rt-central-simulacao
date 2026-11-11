@@ -154,6 +154,12 @@ h2{font-size:26px;line-height:1.1;letter-spacing:-.01em}
   margin-bottom:8px;
 }
 .choice-icon svg{display:block}
+.choice.disabled{opacity:.45;cursor:not-allowed;filter:grayscale(1);background:#fff}
+.choice.disabled:active{transform:none}
+.choice-badge.soon{background:#5b6677}
+.choice .choice-badge{color:#fff;margin-top:0;font-size:9.5px;letter-spacing:.04em}
+.card p.other-help{font-size:13px;text-align:center;margin:-4px 0 4px}
+.other-help a{color:var(--green-deep);font-weight:700;text-decoration:underline;text-underline-offset:2px}
 .choice-badge{
   position:absolute;top:11px;right:11px;
   background:var(--green);color:#fff;
