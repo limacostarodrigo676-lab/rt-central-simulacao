@@ -12,13 +12,16 @@ function corsHeaders(origin: string | null) {
   };
 }
 
-// Regras Crefaz (material de apoio 14/10/2026): parcela maxima = fatura x coeficiente.
-// So COPEL e CPFL/RGE tem coeficiente informado; as demais mostram apenas o teto.
-const ENERGY_RULES: Record<string, { coef?: number; teto: number }> = {
-  COPEL: { coef: 2.0, teto: 2300 },
-  "CPFL / RGE": { coef: 2.3, teto: 4000 },
-  Neoenergia: { teto: 2400 },
-  Enel: { teto: 2700 },
+// Regras do material de apoio do parceiro (14/10/2026): parcela maxima = fatura x coeficiente.
+// A companhia nao e perguntada ao cliente; e deduzida do estado (confirmar na fatura).
+const ENERGY_RULES: Record<string, { company: string; coef?: number; teto: number }> = {
+  PR: { company: "COPEL", coef: 2.0, teto: 2300 },
+  RS: { company: "RGE", coef: 2.3, teto: 4000 },
+  BA: { company: "Coelba", teto: 2400 },
+  PE: { company: "Celpe", teto: 2400 },
+  RN: { company: "Cosern", teto: 2400 },
+  RJ: { company: "Enel RJ", teto: 2700 },
+  CE: { company: "Enel CE", teto: 2700 },
 };
 
 const brl = (n: number) =>
@@ -34,14 +37,23 @@ function parseMoney(raw: string): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-function estimateEnergy(company: string, bill: string): string {
-  const rule = ENERGY_RULES[company];
-  if (!rule) return "Estimativa: companhia a verificar";
+function estimateEnergy(uf: string, bill: string): string {
+  if (uf === "SP") return "Companhia: SP tem CPFL, Enel e Elektro - confirmar na fatura";
+  const rule = ENERGY_RULES[uf];
+  if (!rule) return "Companhia: estado sem regra no material - verificar atendimento";
+  const head = `Provavel ${rule.company} (confirmar na fatura)`;
   const teto = `Teto: ${brl(rule.teto)}`;
   const value = parseMoney(bill);
-  if (!rule.coef) return `Estimativa: sem coeficiente no material · ${teto}`;
-  if (!value) return `Parcela max. estimada: informe a fatura (x${rule.coef.toFixed(1).replace(".", ",")}) · ${teto}`;
-  return `Parcela max. estimada (${company} x${rule.coef.toFixed(1).replace(".", ",")}): ${brl(value * rule.coef)} · ${teto}`;
+  if (!rule.coef) return `${head} · sem coeficiente no material · ${teto}`;
+  const coef = rule.coef.toFixed(1).replace(".", ",");
+  if (!value) return `${head}\nParcela max. estimada: informe a fatura (x${coef}) · ${teto}`;
+  return `${head}\nParcela max. estimada (x${coef}): ${brl(value * rule.coef)} · ${teto}`;
+}
+
+// No WhatsApp o CPF vai mascarado; o completo fica no Netlify Forms / e-mail.
+function maskCpfForChat(cpf: string) {
+  const d = String(cpf || "").replace(/\D/g, "");
+  return d.length === 11 ? `***.${d.slice(3, 6)}.${d.slice(6, 9)}-**` : "-";
 }
 
 export default async (req: Request) => {
@@ -83,9 +95,13 @@ export default async (req: Request) => {
     whatsapp = "-",
     conta_luz = "",
     fatura_anexada = "nao",
+    cpf = "",
+    idade = "",
+    estado = "",
+    cidade = "",
   } = body;
   const isLuz = vinculo === "Conta de Luz";
-  const estimativa = isLuz ? estimateEnergy(valor, conta_luz) : "";
+  const estimativa = isLuz ? estimateEnergy(estado, conta_luz) : "";
 
   const text =
     `Novo lead no simulador RT\n` +
@@ -93,7 +109,9 @@ export default async (req: Request) => {
     `WhatsApp: ${whatsapp}\n` +
     `Vinculo: ${vinculo}\n` +
     (isLuz
-      ? `Companhia: ${valor}\n` +
+      ? `CPF: ${maskCpfForChat(cpf)} · Idade: ${idade || "-"}\n` +
+        `Cidade: ${cidade || "-"}/${estado || "-"}\n` +
+        `Classificacao: ${valor}\n` +
         `Situacao da conta: ${parcela}\n` +
         `Valor da conta: ${conta_luz || "-"}\n` +
         `${estimativa}\n` +

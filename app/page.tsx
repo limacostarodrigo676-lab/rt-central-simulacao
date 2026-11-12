@@ -14,15 +14,52 @@ const links = [
 
 const LUZ = "Conta de Luz";
 
-// Regras do material de apoio Crefaz (14/10/2026). Os tetos dependem da
-// companhia e do perfil do cliente — por isso o texto sempre diz "até".
-const energyCompanies = [
-  { label: "COPEL", description: "Paraná", max: "R$ 2.300" },
-  { label: "CPFL / RGE", description: "CPFL Paulista, Piratininga, Santa Cruz e RGE", max: "R$ 4.000" },
-  { label: "Neoenergia", description: "Elektro, Coelba, Celpe e Cosern", max: "R$ 2.400" },
-  { label: "Enel", description: "Enel SP, RJ e CE", max: "R$ 2.700" },
-  { label: "Outra companhia", description: "Vamos verificar se atendemos", max: "" },
+// Conta de Luz: o cliente informa os dados da pré-análise (classificação,
+// CEP, estado e cidade). Nenhum nome de parceiro ou de companhia de energia
+// aparece para o cliente — a companhia é identificada internamente pelo CEP.
+const energyClasses = [
+  ["Residencial", "Casa ou apartamento"],
+  ["Rural", "Imóvel rural"],
+  ["Comercial", "Empresa ou comércio"],
 ];
+const UFS = [
+  "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "MT", "PA",
+  "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO",
+];
+
+const onlyDigits = (v: string) => v.replace(/\D/g, "");
+function maskCpf(v: string) {
+  const d = onlyDigits(v).slice(0, 11);
+  return d
+    .replace(/^(\d{3})(\d)/, "$1.$2")
+    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d{1,2})$/, ".$1-$2");
+}
+function isValidCpf(v: string) {
+  const d = onlyDigits(v);
+  if (d.length !== 11 || /^(\d)\1+$/.test(d)) return false;
+  for (const len of [9, 10]) {
+    let sum = 0;
+    for (let i = 0; i < len; i++) sum += Number(d[i]) * (len + 1 - i);
+    const check = ((sum * 10) % 11) % 10;
+    if (check !== Number(d[len])) return false;
+  }
+  return true;
+}
+function maskCep(v: string) {
+  const d = onlyDigits(v).slice(0, 8);
+  return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
+}
+function ageFrom(date: string) {
+  const birth = new Date(`${date}T12:00:00`);
+  if (Number.isNaN(birth.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const m = now.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+  return age;
+}
+
 const energySituations = [
   ["No meu nome e em dia", "Sem faturas atrasadas"],
   ["No meu nome, com atraso", "Uma ou mais faturas vencidas"],
@@ -125,6 +162,12 @@ export default function Home() {
   const [bill, setBill] = useState("");
   const [billFile, setBillFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [birth, setBirth] = useState("");
+  const [cep, setCep] = useState("");
+  const [uf, setUf] = useState("");
+  const [city, setCity] = useState("");
+  const [cepStatus, setCepStatus] = useState<"" | "loading" | "error">("");
   const [consent, setConsent] = useState(false);
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
@@ -132,7 +175,25 @@ export default function Home() {
 
   const prefersReducedMotion = useReducedMotion();
   const isLuz = link === LUZ;
-  const company = energyCompanies.find((item) => item.label === value);
+  const age = birth ? ageFrom(birth) : null;
+  const cpfOk = isValidCpf(cpf);
+  const luzReady = !isLuz || (cpfOk && !!birth && onlyDigits(cep).length === 8 && !!uf && !!city.trim());
+
+  async function lookupCep(raw: string) {
+    const d = onlyDigits(raw);
+    if (d.length !== 8) return;
+    setCepStatus("loading");
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${d}/json/`);
+      const data = await res.json();
+      if (data.erro) throw new Error("cep");
+      setUf(data.uf || "");
+      setCity(data.localidade || "");
+      setCepStatus("");
+    } catch {
+      setCepStatus("error");
+    }
+  }
 
   const go = () => {
     setDirection(1);
@@ -162,6 +223,11 @@ export default function Home() {
       nome: name,
       whatsapp: phone,
       conta_luz: isLuz ? bill : "",
+      cpf: isLuz ? cpf : "",
+      nascimento: isLuz ? birth : "",
+      cep: isLuz ? cep : "",
+      estado: isLuz ? uf : "",
+      cidade: isLuz ? city : "",
     };
     const results = await Promise.allSettled([
       isLuz && billFile
@@ -190,6 +256,10 @@ export default function Home() {
           whatsapp: phone,
           conta_luz: isLuz ? bill : "",
           fatura_anexada: isLuz && billFile ? "sim" : "nao",
+          cpf: isLuz ? cpf : "",
+          idade: isLuz && age !== null ? String(age) : "",
+          estado: isLuz ? uf : "",
+          cidade: isLuz ? city : "",
         }),
       }),
     ]);
@@ -339,29 +409,29 @@ export default function Home() {
                   <small>ETAPA 2 DE 4</small>
                   <h2>
                     {isLuz
-                      ? "Qual é a sua companhia de energia?"
+                      ? "Qual é a classificação da sua conta de luz?"
                       : link === "Cartão Consignado"
                         ? "Qual valor ou operação você procura?"
                         : "Quanto você gostaria de consultar?"}
                   </h2>
                   <p>
                     {isLuz
-                      ? "É a empresa que aparece na sua conta de luz."
+                      ? "Aparece na sua fatura de energia, perto dos dados do imóvel."
                       : link === "Cartão Consignado"
                         ? "Escolha uma opção abaixo."
                         : "Escolha uma faixa aproximada."}
                   </p>
                   {isLuz && (
                     <div className="grid">
-                      {energyCompanies.map((item) => (
+                      {energyClasses.map(([label, description]) => (
                         <button
-                          className={value === item.label ? "choice active" : "choice"}
-                          onClick={() => selectAndGo(setValue, item.label)}
-                          key={item.label}
+                          className={value === label ? "choice active" : "choice"}
+                          onClick={() => selectAndGo(setValue, label)}
+                          key={label}
                           type="button"
                         >
-                          <b>{item.label}</b>
-                          <span>{item.description}</span>
+                          <b>{label}</b>
+                          <span>{description}</span>
                         </button>
                       ))}
                     </div>
@@ -389,9 +459,9 @@ export default function Home() {
                   <small>ETAPA 3 DE 4</small>
                   <h2>Como está a sua conta de luz?</h2>
                   <p>
-                    {company?.max
-                      ? `Na ${company.label}, o crédito pode chegar a até ${company.max}, conforme o perfil e a análise de crédito.`
-                      : "Um consultor vai confirmar se a sua companhia é atendida."}
+                    {value === "Residencial"
+                      ? "O valor liberado depende da sua conta de energia e da análise de crédito."
+                      : "Essa modalidade é para contas residenciais. Um consultor vai verificar outras opções para você."}
                   </p>
                   <div className="grid">
                     {energySituations.map(([label, description]) => (
@@ -437,7 +507,7 @@ export default function Home() {
                   <h2>Como podemos falar com você?</h2>
                   <p>Preencha seus dados para continuar.</p>
                   <label>
-                    Nome
+                    {isLuz ? "Nome completo" : "Nome"}
                     <input
                       value={name}
                       onChange={(event) => setName(event.target.value)}
@@ -455,6 +525,71 @@ export default function Home() {
                   </label>
                   {isLuz && (
                     <>
+                      <div className="row2">
+                        <label>
+                          CPF do titular da conta
+                          <input
+                            value={cpf}
+                            onChange={(event) => setCpf(maskCpf(event.target.value))}
+                            placeholder="000.000.000-00"
+                            inputMode="numeric"
+                            aria-invalid={cpf.length === 14 && !cpfOk}
+                          />
+                        </label>
+                        <label>
+                          Data de nascimento
+                          <input
+                            type="date"
+                            value={birth}
+                            onChange={(event) => setBirth(event.target.value)}
+                            max={new Date().toISOString().slice(0, 10)}
+                          />
+                        </label>
+                      </div>
+                      {cpf.length === 14 && !cpfOk && <p className="warn">CPF inválido. Confira os números.</p>}
+                      {age !== null && (age < 21 || age > 84) && (
+                        <p className="warn">
+                          Essa modalidade atende de 21 a 84 anos. Um consultor pode verificar outras opções.
+                        </p>
+                      )}
+                      <label>
+                        CEP do imóvel da conta
+                        <input
+                          value={cep}
+                          onChange={(event) => {
+                            const masked = maskCep(event.target.value);
+                            setCep(masked);
+                            if (onlyDigits(masked).length === 8) lookupCep(masked);
+                          }}
+                          placeholder="00000-000"
+                          inputMode="numeric"
+                        />
+                      </label>
+                      {cepStatus === "loading" && <p className="hint">Buscando endereço…</p>}
+                      {cepStatus === "error" && (
+                        <p className="warn">Não encontramos esse CEP. Preencha estado e cidade abaixo.</p>
+                      )}
+                      <div className="row2 uf-city">
+                        <label>
+                          Estado
+                          <select value={uf} onChange={(event) => setUf(event.target.value)}>
+                            <option value="">UF</option>
+                            {UFS.map((item) => (
+                              <option key={item} value={item}>
+                                {item}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          Cidade
+                          <input
+                            value={city}
+                            onChange={(event) => setCity(event.target.value)}
+                            placeholder="Sua cidade"
+                          />
+                        </label>
+                      </div>
                       <label>
                         Valor da última conta de luz (opcional)
                         <input
@@ -509,7 +644,7 @@ export default function Home() {
                   </label>
                   <button
                     className="primary"
-                    disabled={!name || !phone || !consent || sending}
+                    disabled={!name || !phone || !consent || !luzReady || sending}
                     onClick={submitLead}
                   >
                     {sending ? (
